@@ -81,14 +81,15 @@ class WordAsVec {
         
         while(L>S){
             if(wordvecs.get(M).getWord().compareTo(word)>0){
-                S=M;
+                S=M+1;
                 M=(L+S)/2;
             }else if(wordvecs.get(M).getWord().compareTo(word)<0){
-                L=M-1;
+                L=M;
                 M=(L+S)/2;
             }else if(wordvecs.get(M).getWord().compareTo(word)==0){
                 return wordvecs.get(M);
             }
+            System.out.println(L+" "+S);
         }
         return null;
     }

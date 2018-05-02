@@ -14,12 +14,13 @@ import java.util.Comparator;
  * @author Lacko
  */
 public class SentencePair{
+    private int type=-1;
 
-    String Atokens[];
-    String Btokens[];
+    private String Atokens[];
+    private String Btokens[];
 
-    SentenceTree ATree;
-    SentenceTree BTree;
+    private SentenceTree ATree;
+    private SentenceTree BTree;
 
     private SentenceTree buildTree(String sentence) {
         SentenceTree parent = null;
@@ -52,7 +53,21 @@ public class SentencePair{
         }
         return current;
     }
+    public int getType(){
+        return this.type;
+    }
+    public void setType(int type){
+        this.type=type;
+    }
+    public SentencePair(String Asentence, String Bsentence,int type) {
+        this.ATree = buildTree(Asentence);
+        this.BTree = buildTree(Bsentence);
 
+        Atokens = ATree.getSentence().split(" ");
+        Btokens = BTree.getSentence().split(" ");
+        
+        this.type=type;
+    }
     public SentencePair(String Asentence, String Bsentence) {
         this.ATree = buildTree(Asentence);
         this.BTree = buildTree(Bsentence);
@@ -78,16 +93,20 @@ public class SentencePair{
     }
     public double[] getSentencePairVec(ArrayList<WordAsVec> vecs){
         WordAsVec Asentence[]=new WordAsVec[Atokens.length];
+        System.out.println("sent");
         for(int i=0;i<Atokens.length;i++){
             Asentence[i]=WordAsVec.find(vecs,Atokens[i]);
         }
+        System.out.println("sent");
         WordAsVec Bsentence[]=new WordAsVec[Btokens.length];
         for(int i=0;i<Btokens.length;i++){
             Bsentence[i]=WordAsVec.find(vecs,Btokens[i]);
         }
+        System.out.println("sent");
         WordAsVec Avec=WordAsVec.avarge(Asentence);
         WordAsVec Bvec=WordAsVec.avarge(Bsentence);
         double result[]=new double[WordAsVec.vecSize*WordAsVec.vecSize];
+        
         for(int i=0;i<WordAsVec.vecSize;i++){
             for(int j=0;j<WordAsVec.vecSize;j++){
                 result[i*WordAsVec.vecSize+j]=Avec.getWordvec()[i]*Bvec.getWordvec()[j];

@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-
+import smile.classification.LogisticRegression;
 /**
  *
  * @author Lacko
@@ -131,7 +131,9 @@ public class NLInference {
             } catch (IOException ex) {
                 Logger.getLogger(NLInference.class.getName()).log(Level.SEVERE, null, ex);
             }
+            System.out.println("wordvecs");
             WordVec.sort(WordAsVec.comp);
+            System.out.println("sorted wordvecs");
             /*for(WordAsVec w:WordVec){
                 System.out.println(w.getWord());
             }*/
@@ -141,22 +143,29 @@ public class NLInference {
         Entailment.sort(SentencePair.compPerWord);
         Neutral.sort(SentencePair.compPerWord);*/
         
-        double contr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Contradiction.size()];
+        /*double contr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Contradiction.size()];
         double ental[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Entailment.size()];
-        double neutr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Neutral.size()];
+        double neutr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Neutral.size()];*/
+        double sentenceVec[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Contradiction.size()+Entailment.size()+Neutral.size()];
+        int groups[]=new int[Contradiction.size()+Entailment.size()+Neutral.size()];
+        
+        System.out.println("sentence pairing");
         for(int i=0;i<Contradiction.size();i++){
-            contr[i]=Contradiction.get(i).getSentencePairVec(WordVec);
+            sentenceVec[i]=Contradiction.get(i).getSentencePairVec(WordVec);
         }
         for(int i=0;i<Entailment.size();i++){
-            contr[i]=Entailment.get(i).getSentencePairVec(WordVec);
+            sentenceVec[Contradiction.size()+i]=Entailment.get(i).getSentencePairVec(WordVec);
         }
         for(int i=0;i<Neutral.size();i++){
-            contr[i]=Neutral.get(i).getSentencePairVec(WordVec);
+            sentenceVec[Contradiction.size()+Entailment.size()+i]=Neutral.get(i).getSentencePairVec(WordVec);
         }
         
-        StatViewer panel = new StatViewer(Neutral, Contradiction, Entailment);
-        frame.add(panel);
-
+        /*StatViewer panel = new StatViewer(Neutral, Contradiction, Entailment);
+        frame.add(panel);*/
+        
+        System.out.println("start learning");
+        LogisticRegression regression=new LogisticRegression(sentenceVec, groups);
+        System.out.println(regression.loglikelihood());
         /*float sum = 0.0f;
         for (SentencePair pair : Entailment) {
             sum += pair.JaccardPerCharAvarge();
