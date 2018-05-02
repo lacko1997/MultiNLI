@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
+import smile.classification.LogisticRegression;
 
 /**
  *
@@ -22,6 +23,8 @@ import javax.swing.filechooser.FileFilter;
  */
 public class MultiNLI {
 
+    static ArrayList<SentencePair> pairs = new ArrayList<SentencePair>();
+    static ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>();
     static FileFilter sentence = new FileFilter() {
 
         @Override
@@ -54,22 +57,24 @@ public class MultiNLI {
         chooser.getSelectedFile();
         return chooser.getSelectedFile();
     }
-    
-    static ArrayList<SentencePair> pairs=new ArrayList<SentencePair>();
-    static ArrayList<WordAsVec> vecs=new ArrayList<WordAsVec>();
-    
+
     public static void main(String args[]) {
         File file1;
         File file2;
-        if (args.length > 0) {
-            file1 = new File(args[0]);
-        } else {
+        if (args.length > 0 && args[0].equals("-gui")) {
             file1 = showGUI(sentence);
-        }
-        if (args.length > 1) {
-            file2 = new File(args[0]);
-        } else {
             file2 = showGUI(wordvec);
+        } else {
+            if (args.length > 0) {
+                file1 = new File(args[0]);
+            } else {
+                file1 = showGUI(sentence);
+            }
+            if (args.length > 1) {
+                file2 = new File(args[0]);
+            } else {
+                file2 = showGUI(wordvec);
+            }
         }
         if (file1 == null || file2 == null) {
             System.out.println("No file selected");
@@ -81,13 +86,13 @@ public class MultiNLI {
                 String sentence[] = line.split("\t");
                 int type = -1;
                 if (line.startsWith("contradiction\t")) {
-                    type=0;
+                    type = 0;
                 } else if (line.startsWith("neutral\t")) {
-                    type=1;
+                    type = 1;
                 } else if (line.startsWith("entailment\t")) {
-                    type=2;
+                    type = 2;
                 }
-                pairs.add(new SentencePair(sentence[3], sentence[4],type));
+                pairs.add(new SentencePair(sentence[3], sentence[4], type));
 
                 line = sreader.readLine();
             }
@@ -97,14 +102,21 @@ public class MultiNLI {
         try {
             BufferedReader vreader = new BufferedReader(new InputStreamReader(new FileInputStream(file2)));
             String line = vreader.readLine();
-            WordAsVec.vecSize=Integer.parseInt(line.split(" ")[1]);
-            line=vreader.readLine();
+            WordAsVec.vecSize = Integer.parseInt(line.split(" ")[1]);
+            line = vreader.readLine();
             while (line != null) {
                 vecs.add(new WordAsVec(line));
-                line=vreader.readLine();
+                line = vreader.readLine();
             }
         } catch (IOException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
         }
+        double vecarray[][] = new double[WordAsVec.vecSize * WordAsVec.vecSize][pairs.size()];
+        int types[]=new int[pairs.size()];
+        for(int i=0;i<pairs.size();i++){
+            vecarray[i]=pairs.get(i).getSentencePairVec(vecs);
+            types[i]=pairs.get(i).getType();
+        }
+        LogisticRegression regression = new LogisticRegression(vecarray,types);
     }
 }
