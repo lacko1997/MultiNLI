@@ -3,6 +3,8 @@ bin/
 build/
 nbproject/
 
+.project
+.classpath
 *.class
 
 # Log file
