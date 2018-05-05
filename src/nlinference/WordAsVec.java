@@ -7,6 +7,7 @@ package nlinference;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 
 /**
  *
@@ -17,21 +18,25 @@ class WordAsVec {
     public static final String UNKNOWN="#UNKNOWN";
     
     private String word;
-    private float wordvec[];
+    private double wordvec[];
     WordAsVec(String raw){
         String segments[]=raw.split(" ");
-        wordvec=new float[vecSize];
+        wordvec=new double[vecSize];
         for(int i=1;i<=vecSize;i++){
-            wordvec[i-1]=Float.parseFloat(segments[i]);
+            wordvec[i-1]=Double.parseDouble(segments[i]);
         }
-        word=segments[0];
+        word=segments[0].toLowerCase();
     }
     WordAsVec(){
-        wordvec=new float[vecSize];
+        wordvec=new double[vecSize];
         word=UNKNOWN;
     }
-    WordAsVec(float wordvec[]){
+    WordAsVec(double wordvec[]){
         this.word=UNKNOWN;
+        this.wordvec=wordvec;
+    }
+    WordAsVec(String word,double wordvec[]){
+        this.word=word;
         this.wordvec=wordvec;
     }
     private void add(WordAsVec v2){
@@ -55,43 +60,32 @@ class WordAsVec {
         return vec;
     }
     static WordAsVec diff(WordAsVec v1,WordAsVec v2){
-        float resultvec[]=new float[vecSize];
+        double resultvec[]=new double[vecSize];
         for(int i=0;i<vecSize;i++){
             resultvec[vecSize]=v1.wordvec[i]-v2.wordvec[i];
         }
         return new WordAsVec(resultvec);
     }
     static WordAsVec sum(WordAsVec v1,WordAsVec v2){
-        float resultvec[]=new float[vecSize];
+        double resultvec[]=new double[vecSize];
         for(int i=0;i<vecSize;i++){
             resultvec[vecSize]=v1.wordvec[i]+v2.wordvec[i];
         }
         return new WordAsVec(resultvec);
     }
-    public float[] getWordvec(){
+    public double[] getWordvec(){
         return wordvec;
     }
     public String getWord(){
         return word;
     }
-    public static WordAsVec find(ArrayList<WordAsVec> wordvecs,String word){
-        int M=wordvecs.size()/2;
-        int L=wordvecs.size()-1;
-        int S=0;
-        
-        while(L>S){
-            if(wordvecs.get(M).getWord().compareTo(word)>0){
-                S=M+1;
-                M=(L+S)/2;
-            }else if(wordvecs.get(M).getWord().compareTo(word)<0){
-                L=M;
-                M=(L+S)/2;
-            }else if(wordvecs.get(M).getWord().compareTo(word)==0){
-                return wordvecs.get(M);
-            }
-            System.out.println(L+" "+S);
+    public static WordAsVec find(HashMap<String,double[]> wordvecs,String word){
+        double valueVec[]=wordvecs.get(word);
+        if(valueVec!=null){
+            return new WordAsVec(word,valueVec);
+        }else{
+            return null;
         }
-        return null;
     }
     
     @Override

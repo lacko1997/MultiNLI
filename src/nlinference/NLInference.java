@@ -40,7 +40,7 @@ public class NLInference {
     
     static ArrayList<WordAsVec> WordVec=new ArrayList<WordAsVec>();
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -136,7 +136,7 @@ public class NLInference {
             System.out.println("sorted wordvecs");
             /*for(WordAsVec w:WordVec){
                 System.out.println(w.getWord());
-            }*/
+            }
         }
 
         /*Contradiction.sort(SentencePair.compPerWord);
@@ -145,7 +145,7 @@ public class NLInference {
         
         /*double contr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Contradiction.size()];
         double ental[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Entailment.size()];
-        double neutr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Neutral.size()];*/
+        double neutr[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Neutral.size()];
         double sentenceVec[][]=new double[WordAsVec.vecSize*WordAsVec.vecSize][Contradiction.size()+Entailment.size()+Neutral.size()];
         int groups[]=new int[Contradiction.size()+Entailment.size()+Neutral.size()];
         
@@ -161,12 +161,12 @@ public class NLInference {
         }
         
         /*StatViewer panel = new StatViewer(Neutral, Contradiction, Entailment);
-        frame.add(panel);*/
+        frame.add(panel);
         
         System.out.println("start learning");
         LogisticRegression regression=new LogisticRegression(sentenceVec, groups);
         System.out.println(regression.loglikelihood());
-        /*float sum = 0.0f;
+        float sum = 0.0f;
         for (SentencePair pair : Entailment) {
             sum += pair.JaccardPerCharAvarge();
             //System.out.println(pair.JaccardPerCharAvarge());
@@ -185,14 +185,14 @@ public class NLInference {
             sum += pair.JaccardPerCharAvarge();
             //System.out.println(pair.JaccardPerCharAvarge());
         }
-        System.out.println("Contradiction AVG: " + (sum / Contradiction.size()));*/
-    }
+        System.out.println("Contradiction AVG: " + (sum / Contradiction.size()));
+    }*/
 
-    static float calculateMedian(ArrayList<SentencePair> pairs) {
+    /*static float calculateMedian(ArrayList<SentencePair> pairs) {
         if (pairs.size() % 2 == 0) {
             return (pairs.get(pairs.size() / 2).JaccardPerWord() + pairs.get(pairs.size() / 2 - 1).JaccardPerWord()) / 2.0f;
         } else {
             return pairs.get(pairs.size() / 2).JaccardPerWord();
         }
-    }
+    }*/
 }
