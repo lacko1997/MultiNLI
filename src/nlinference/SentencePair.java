@@ -100,35 +100,48 @@ public class SentencePair {
     public static int wordCount = 0;
     public static int foundWords = 0;
 
-    public double[] getSentencePairVec(HashMap<String,double[]> vecs) {
-        WordAsVec Asentence[] = new WordAsVec[Atokens.length];
-        for (int i = 0; i < Atokens.length; i++) {
-            Asentence[i] = WordAsVec.find(vecs, Atokens[i]);
-            wordCount++;
-            if (Asentence[i] != null) {
-                foundWords++;
-            }
-        }
-        WordAsVec Bsentence[] = new WordAsVec[Btokens.length];
-        for (int i = 0; i < Btokens.length; i++) {
-            Bsentence[i] = WordAsVec.find(vecs, Btokens[i]);
-            wordCount++;
-            if (Bsentence[i] != null) {
-                foundWords++;
-            }
-        }
+    public double[] getSentencePairVec(HashMap<String,double[]> vecs){
         //System.out.println("sent");
-        /*WordAsVec Avec=WordAsVec.avarge(Asentence);
-         WordAsVec Bvec=WordAsVec.avarge(Bsentence);
-         double result[]=new double[WordAsVec.vecSize*WordAsVec.vecSize];
+        int wordInSentenceA=0;
+        for(int i=0;i<Atokens.length;i++){
+            WordAsVec vec=WordAsVec.find(vecs,Btokens[i]);
+            wordCount++;
+            if(vec!=null){
+                wordInSentenceA++;
+                foundWords++;
+            }
+        }
+        int wordInSentenceB=0;
+        //System.out.println("sent");
         
-         for(int i=0;i<WordAsVec.vecSize;i++){
-         for(int j=0;j<WordAsVec.vecSize;j++){
-         result[i*WordAsVec.vecSize+j]=Avec.getWordvec()[i]*Bvec.getWordvec()[j];
-         }
-         }
-         return result;*/
-        return null;
+        for(int i=0;i<Btokens.length;i++){
+            WordAsVec vec=WordAsVec.find(vecs,Btokens[i]);
+            wordCount++;
+            if(vec!=null){
+                wordInSentenceB++;
+                foundWords++;
+            }
+        }
+        WordAsVec Asentence[]=new WordAsVec[wordInSentenceA];
+        WordAsVec Bsentence[]=new WordAsVec[wordInSentenceB];
+
+        int at=0;
+        for(int i=0;i<Atokens.length;i++){
+            if(Atokens[i]!=null){
+                Asentence[at]=WordAsVec.find(WordAsVec.find(vecs, Atokens[i]));
+                at++;
+            }
+        }
+        
+        WordAsVec Avec=WordAsVec.avarge(Asentence);
+        WordAsVec Bvec=WordAsVec.avarge(Bsentence);
+        double result[]=new double[WordAsVec.vecSize*WordAsVec.vecSize];
+        for(int i=0;i<WordAsVec.vecSize;i++){
+            for(int j=0;j<WordAsVec.vecSize;j++){
+                result[i*WordAsVec.vecSize+j]=Avec.getWordvec()[i]*Bvec.getWordvec()[j];
+            }
+        }
+        return result;
     }
 
     public float JaccardPerWord() {
