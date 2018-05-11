@@ -112,7 +112,7 @@ public class MultiNLI {
                 }
             }
         }
-        if(file1!=null&&file2!=null){
+        if (file1 != null && file2 != null) {
             memorizeLastSelectedLocation(file1, file2);
         }
         if (file1 == null || file2 == null) {
@@ -147,16 +147,16 @@ public class MultiNLI {
                 Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
-        HashMap<String,double[]> wordVecMap=new HashMap<String,double[]>();
-        for(int i=0;i<vecs.size();i++){
-            wordVecMap.put(vecs.get(i).getWord(),vecs.get(i).getWordvec());
+
+        HashMap<String, double[]> wordVecMap = new HashMap<String, double[]>();
+        for (int i = 0; i < vecs.size(); i++) {
+            wordVecMap.put(vecs.get(i).getWord(), vecs.get(i).getWordvec());
         }
-        
+
         System.err.format("%d vectors read in...", vecs.size());
 
         vecs.sort(WordAsVec.comp);
-        
+
         LinkedList<double[]> featuresAsList = new LinkedList<>();
         LinkedList<Integer> typesAsList = new LinkedList<>();
         try (BufferedReader sreader = new BufferedReader(new InputStreamReader(new FileInputStream(file1)))) {
@@ -173,10 +173,12 @@ public class MultiNLI {
                 } else if (line.startsWith("entailment\t")) {
                     type = 2;
                 }
-                typesAsList.add(type);
-                SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
-                double[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap); // TODO fix this!!!
-                featuresAsList.add(featuresOfSentencePair);
+                if (type != (-1)) {
+                    typesAsList.add(type);
+                    SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
+                    double[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap); // TODO fix this!!!
+                    featuresAsList.add(featuresOfSentencePair);
+                }
                 line = sreader.readLine();
                 if (++lineCounter % 150000 == 0) {
                     break;
@@ -201,19 +203,20 @@ public class MultiNLI {
 
         float found = (float) SentencePair.foundWords / (float) SentencePair.wordCount;
         System.out.println(found);
-
-        /*LogisticRegression regression = new LogisticRegression(features, types); // TODO handle proper model selection (e.g. cross-validation)
-        int prediction = regression.predict(features[0]);
-        System.err.println(prediction + " " + types[0]);*/
+        for (int j = 0; j < 100; j++) {
+            LogisticRegression regression = new LogisticRegression(features, types); // TODO handle proper model selection (e.g. cross-validation)
+            int prediction = regression.predict(features[j]);
+            System.err.println(prediction + " " + types[j]);
+        }
     }
 
     private static void memorizeLastSelectedLocation(File file1, File file2) {
-        try (FileWriter writer=new FileWriter(new File("lastLoc"))) {
+        try (FileWriter writer = new FileWriter(new File("lastLoc"))) {
             writer.write(file1.getAbsolutePath() + "\n");
             writer.write(file2.getAbsolutePath() + "\n");
             writer.close();
         } catch (FileNotFoundException ex) {
-             System.out.println("Iaxception");
+            System.out.println("Iaxception");
         } catch (IOException ex) {
             System.out.println("IOException");
         }
@@ -228,7 +231,7 @@ public class MultiNLI {
             } else {
                 files[0] = null;
             }
-            
+
             str = fin.readLine();
             if (str != null) {
                 files[1] = new File(str);
