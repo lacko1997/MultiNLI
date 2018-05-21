@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -72,62 +73,101 @@ public class MultiNLI {
         chooser.getSelectedFile();
         return chooser.getSelectedFile();
     }
+    private static boolean normalize = false;
+    private static String genre = "#ALL";
+
+    private static void processArgs(String args[], File files[][]) {
+        boolean noTrainFound = false;
+        int genreIndex = -1;
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equalsIgnoreCase("-notrain")) {
+                noTrainFound = true;
+            }
+            if (args[i].equalsIgnoreCase("-norm")) {
+                normalize = true;
+            }
+            if (args[i].equalsIgnoreCase("-genre")) {
+                try {
+                    genre = args[i + 1];
+                    genreIndex = i + 1;
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    System.out.println("No genre given.");
+                }
+            }
+        }
+        files[0] = new File[noTrainFound ? 1 : 3];
+        int at = 0;
+        for (int i = 0; i < args.length; i++) {
+            if (i != genreIndex && (!args[i].startsWith("-"))) {
+                if (noTrainFound) {
+                    files[0][0] = new File(args[i]);
+                    break;
+                } else {
+                    files[0][at] = new File(args[i]);
+                    at++;
+                }
+            }
+        }
+        if (!noTrainFound && at < 3) {
+            File lastUsedFiles[] = rememberLastClosedLocations();
+
+            String prefix0 = "Training data:" + (files[0][0] == null ? "missing" : files[0][0]);
+            String prefix1 = "Training data:" + (files[0][1] == null ? "missing" : files[0][1]);
+            String prefix2 = "Training data:" + (files[0][2] == null ? "missing" : files[0][2]);
+
+            String postfix0 = lastUsedFiles[0] == null ? " Nothing can be used" : ". Using last known location:" + lastUsedFiles[0];
+            String postfix1 = lastUsedFiles[1] == null ? " Nothing can be used" : ". Using last known location:" + lastUsedFiles[1];
+            String postfix2 = lastUsedFiles[2] == null ? " Nothing can be used" : ". Using last known location:" + lastUsedFiles[2];
+
+            for (int i = 0; i < 3; i++) {
+                files[0][i]=lastUsedFiles[i];
+            }
+
+            System.out.println(prefix0 + postfix0);
+            System.out.println(prefix1 + postfix1);
+            System.out.println(prefix2 + postfix2);
+        }
+    }
+    HashSet<String> genreSet = new HashSet<String>();
+
+    void findGenres(File sentence_file) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(sentence_file));
+            String line = reader.readLine();
+            line = reader.readLine();
+            while (line != null) {
+                String elements[] = line.split("\t");
+                genreSet.add(elements[9]);
+                line = reader.readLine();
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public static void main(String args[]) {
         File sentence_file = null;
         File wordvec_file = null;
         File trial_file = null;
 
-        File files[] = rememberLastClosedLocations();
+        //File files[] = rememberLastClosedLocations();
+        File file[][] = new File[1][];
+        processArgs(args, file);
 
-        switch (args.length) {
-            case 0:
-                System.out.println("MultiNLI program help:");
-                System.out.println("The first parameter is the path to the training data.");
-                System.out.println("The second parameter is the path to the word vectors.");
-                System.out.println("The third parameter is the path to the testing data.");
-                System.out.println("-gui: It must be in the first parameter. If set it opens a file selector GUI.");
-                System.out.println("-notrain: It must be in the first parameter. If set, you have to onlyí give the\ntesting data in the second parameter.");
-                System.exit(0);
-                break;
-            case 1:
-                if (args[0].equals("-notrain")) {
-                    System.out.println("No testing file was given.");
-                } else if (args[0].equals("-gui")) {
-                    if (files[0] != null) {
-                        sentence_file = showGUI(sentence, files[0]);
-                    } else {
-                        sentence_file = showGUI(sentence);
-                    }
-                    if (files[1] != null) {
-                        wordvec_file = showGUI(wordvec, files[1]);
-                    } else {
-                        wordvec_file = showGUI(wordvec);
-                    }
-                    if (files[2] != null) {
-                        wordvec_file = showGUI(wordvec, files[1]);
-                    } else {
-                        wordvec_file = showGUI(wordvec);
-                    }
-                } else {
-                    System.out.println(args[0] + "is not a valid switch");
-                }
-            case 2:
-                if (args[0].equals("-notrain")) {
-                    trial_file = new File(args[1]);
-                } else {
-                    System.out.println("Switch needs only one parameter");
-                }
-                break;
-            case 3:
-                sentence_file=new File(args[0]);
-                wordvec_file=new File(args[1]);
-                trial_file=new File(args[2]);
-                break;
+        if (file[0][0] != null) {
+            sentence_file = file[0][0];
+        }
+        if (file[0][1] != null) {
+            wordvec_file = file[0][1];
+        }
+        if (file[0][2] != null) {
+            trial_file = file[0][2];
         }
 
-        if (sentence_file != null && wordvec_file != null) {
-            memorizeLastSelectedLocation(sentence_file, wordvec_file);
+        if (sentence_file != null && wordvec_file != null && trial_file != null) {
+            memorizeLastSelectedLocation(sentence_file, wordvec_file, trial_file);
         }
         if (sentence_file == null || wordvec_file == null) {
             System.out.println("No file selected");
@@ -150,7 +190,7 @@ public class MultiNLI {
         }
     }
 
-    public static int[] testData(LogisticRegression regression, HashMap<String, double[]> vecs, File file) {
+    public static int[] testData(LogisticRegression regression, HashMap<String, double[]> vecs, File file,String genre) {
         int matrix[] = new int[9];
         try {
             BufferedReader bin = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
@@ -168,12 +208,32 @@ public class MultiNLI {
                 }
                 if (type != -1) {
                     SentencePair pair = new SentencePair(sentences[3], sentences[4]);
-                    double sentenceVec[]=pair.getSentencePairVec(vecs);
-                    int predType=regression.predict(sentenceVec);
-                    matrix[predType*3+type]++;
+                    double sentenceVec[] = pair.getSentencePairVec(vecs);
+                    int predType = regression.predict(sentenceVec);
+                    matrix[predType * 3 + type]++;
                 }
                 line = bin.readLine();
             }
+            for(int i=0;i<3;i++){
+                System.out.println(matrix[i*3]+" "+matrix[i*3+1]+" "+matrix[i*3+2]);
+            }
+            int overall=0;
+            int allcorrect=0;
+            for(int i=0;i<9;i++){
+                overall+=matrix[i];
+            }
+            float correct[]=new float[3];
+            for(int i=0;i<3;i++){
+                allcorrect+=matrix[i*3+i];
+                correct[i]=(float)matrix[i*3+i]/(float)(matrix[i*3]+matrix[i*3+1]+matrix[i*3+2]);
+            }
+            System.out.println("training data:"+" "+"genre: "+genre+(normalize?"normalized":""));
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            System.out.println("contradiction: "+correct[0]);
+            System.out.println("neutral: "+correct[1]);
+            System.out.println("entailment: "+correct[2]);
+            System.out.println("");
+            System.out.println("overall: "+((float)allcorrect/(float)overall));
         } catch (FileNotFoundException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -239,10 +299,11 @@ public class MultiNLI {
         }
     }
 
-    private static void memorizeLastSelectedLocation(File file1, File file2) {
+    private static void memorizeLastSelectedLocation(File file1, File file2, File file3) {
         try (FileWriter writer = new FileWriter(new File("lastLoc"))) {
             writer.write(file1.getAbsolutePath() + "\n");
             writer.write(file2.getAbsolutePath() + "\n");
+            writer.write(file3.getAbsolutePath() + "\n");
             writer.close();
         } catch (FileNotFoundException ex) {
             System.out.println("Iaxception");
