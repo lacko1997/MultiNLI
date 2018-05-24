@@ -179,18 +179,17 @@ public class MultiNLI {
 
         double features[][][] = new double[1][][];
         int types[][] = new int[1][];
-        getData(vecs, features, types, sentence_file);
+        HashMap<String,double[]> vecMap=getData(vecs, features, types, sentence_file);
 
         float found = (float) SentencePair.foundWords / (float) SentencePair.wordCount;
         System.out.println(found);
-        for (int j = 0; j < 100; j++) {
-            LogisticRegression regression = new LogisticRegression(features[0], types[0]); // TODO handle proper model selection (e.g. cross-validation)
-            int prediction = regression.predict(features[0][j]);
-            System.err.println(prediction + " " + types[0][j]);
-        }
+       
+        LogisticRegression regression = new LogisticRegression(features[0], types[0]); // TODO handle proper model selection (e.g. cross-validation)
+        testData(regression,vecMap,sentence_file.getName(),trial_file,genre);
+        
     }
 
-    public static int[] testData(LogisticRegression regression, HashMap<String, double[]> vecs, File file,String genre) {
+    public static int[] testData(LogisticRegression regression, HashMap<String, double[]> vecs,String training, File file,String genre) {
         int matrix[] = new int[9];
         try {
             BufferedReader bin = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
@@ -227,7 +226,7 @@ public class MultiNLI {
                 allcorrect+=matrix[i*3+i];
                 correct[i]=(float)matrix[i*3+i]/(float)(matrix[i*3]+matrix[i*3+1]+matrix[i*3+2]);
             }
-            System.out.println("training data:"+" "+"genre: "+genre+(normalize?"normalized":""));
+            System.out.println("training data: "+training+" "+"genre: "+genre+(normalize?"normalized":""));
             System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             System.out.println("contradiction: "+correct[0]);
             System.out.println("neutral: "+correct[1]);
@@ -242,7 +241,7 @@ public class MultiNLI {
         return matrix;
     }
 
-    public static void getData(ArrayList<WordAsVec> vecs, double[][][] feature, int typearr[][], File file1) {
+    public static HashMap<String,double[]> getData(ArrayList<WordAsVec> vecs, double[][][] feature, int typearr[][], File file1) {
         HashMap<String, double[]> wordVecMap = new HashMap<String, double[]>();
         for (int i = 0; i < vecs.size(); i++) {
             wordVecMap.put(vecs.get(i).getWord(), vecs.get(i).getWordvec());
@@ -297,6 +296,7 @@ public class MultiNLI {
         for (Integer type : typesAsList) {
             types[i++] = type;
         }
+        return wordVecMap;
     }
 
     private static void memorizeLastSelectedLocation(File file1, File file2, File file3) {
