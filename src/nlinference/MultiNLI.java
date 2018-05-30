@@ -128,11 +128,11 @@ public class MultiNLI {
             System.out.println(prefix2 + postfix2);
         }
     }
-    HashSet<String> genreSet = new HashSet<String>();
+    static HashSet<String> genreSet = new HashSet<String>();
 
-    void findGenres(File sentence_file) {
+    static void findGenres(File sentence_file) {
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(sentence_file));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sentence_file)));
             String line = reader.readLine();
             line = reader.readLine();
             while (line != null) {
@@ -155,7 +155,14 @@ public class MultiNLI {
         //File files[] = rememberLastClosedLocations();
         File file[][] = new File[1][];
         processArgs(args, file);
-
+        
+        sentence_file=file[0][0];
+        wordvec_file=file[0][1];
+        trial_file=file[0][2];
+        
+        findGenres(sentence_file);
+        System.out.println(genreSet);
+        
         if (file[0][0] != null) {
             sentence_file = file[0][0];
         }
@@ -226,8 +233,9 @@ public class MultiNLI {
                 allcorrect+=matrix[i*3+i];
                 correct[i]=(float)matrix[i*3+i]/(float)(matrix[i*3]+matrix[i*3+1]+matrix[i*3+2]);
             }
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             System.out.println("training data: "+training+" "+"genre: "+genre+(normalize?"normalized":""));
-            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             System.out.println("contradiction: "+correct[0]);
             System.out.println("neutral: "+correct[1]);
             System.out.println("entailment: "+correct[2]);
@@ -247,7 +255,7 @@ public class MultiNLI {
             wordVecMap.put(vecs.get(i).getWord(), vecs.get(i).getWordvec());
         }
 
-        System.err.format("%d vectors read in...", vecs.size());
+        System.err.format("%d vectors read in...\n", vecs.size());
 
         vecs.sort(WordAsVec.comp);
 
@@ -274,7 +282,7 @@ public class MultiNLI {
                     featuresAsList.add(featuresOfSentencePair);
                 }
                 line = sreader.readLine();
-                if (++lineCounter % 150000 == 0) {
+                if (++lineCounter % 85000 == 0) {
                     break;
                 }
                 if (lineCounter % 10000 == 0) {
@@ -330,7 +338,6 @@ public class MultiNLI {
             try (BufferedReader vreader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file2))))) {
                 String line = vreader.readLine();
                 WordAsVec.vecSize = Integer.parseInt(line.split(" ")[1]);
-                vecs = new ArrayList<WordAsVec>(Integer.parseInt(line.split(" ")[0]));
                 line = vreader.readLine();
                 while (line != null) {
                     vecs.add(new WordAsVec(line));
