@@ -39,6 +39,25 @@ class WordAsVec {
         this.word=word;
         this.wordvec=wordvec;
     }
+    
+    public void normalize(){
+        double sqsum=0.0f;
+        for(double f:wordvec){
+           sqsum+=(f*f); 
+        }
+        double vecLength=Math.sqrt(sqsum);
+        for(int i=0;i<wordvec.length;i++){
+            wordvec[i]/=vecLength;
+        }
+    }
+    boolean isZeroVec(){
+        for(double f:wordvec){
+            if(f!=0.0){
+                return false;
+            }
+        }
+        return true;
+    }
     private void add(WordAsVec v2){
         for(int i=0;i<vecSize;i++){
             this.wordvec[i]+=v2.wordvec[i];

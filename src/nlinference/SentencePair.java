@@ -106,7 +106,7 @@ public class SentencePair {
         for (int i = 0; i < Atokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Atokens[i]);
             wordCount++;
-            if (vec != null) {
+            if (vec != null&&!vec.isZeroVec()) {
                 wordInSentenceA++;
                 foundWords++;
             }
@@ -117,7 +117,7 @@ public class SentencePair {
         for (int i = 0; i < Btokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Btokens[i]);
             wordCount++;
-            if (vec != null) {
+            if (vec != null&&!vec.isZeroVec()) {
                 wordInSentenceB++;
                 foundWords++;
             }
@@ -141,7 +141,7 @@ public class SentencePair {
         int at = 0;
         for (int i = 0; i < Atokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Atokens[i]);
-            if (vec != null) {
+            if (vec != null&&!vec.isZeroVec()) {
                 Asentence[at] = vec;
                 at++;
             }
@@ -149,7 +149,7 @@ public class SentencePair {
         at = 0;
         for (int i = 0; i < Btokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Btokens[i]);
-            if (vec != null) {
+            if (vec != null&&!vec.isZeroVec()) {
                 Bsentence[at] = vec;
                 at++;
             }

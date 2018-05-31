@@ -181,7 +181,7 @@ public class MultiNLI {
             System.exit(-1);
         }
 
-        ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>();
+        ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>(getVecCount(wordvec_file));
         getWordVecs(vecs, wordvec_file);
 
         double features[][][] = new double[1][][];
@@ -319,16 +319,29 @@ public class MultiNLI {
             System.out.println("IOException");
         }
     }
-
+    private static int getVecCount(File file2){
+        try (BufferedReader reader=new BufferedReader(new InputStreamReader(new FileInputStream(file2)))){
+            String line=reader.readLine();
+            return Integer.parseInt(line.split(" ")[0]);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
     private static void getWordVecs(ArrayList<WordAsVec> vecs, File file2) {
         if (!file2.getName().endsWith(".gz")) {
             try (BufferedReader vreader = new BufferedReader(new InputStreamReader(new FileInputStream(file2)))) {
                 String line = vreader.readLine();
                 WordAsVec.vecSize = Integer.parseInt(line.split(" ")[1]);
-                vecs = new ArrayList<WordAsVec>(Integer.parseInt(line.split(" ")[0]));
                 line = vreader.readLine();
                 while (line != null) {
-                    vecs.add(new WordAsVec(line));
+                    WordAsVec vec=new WordAsVec(line);
+                    if(normalize){
+                        vec.normalize();
+                    }
+                    vecs.add(vec);
                     line = vreader.readLine();
                 }
             } catch (IOException ex) {
