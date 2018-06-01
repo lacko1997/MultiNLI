@@ -9,10 +9,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +22,7 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
+import javax.imageio.stream.FileImageOutputStream;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -192,10 +195,29 @@ public class MultiNLI {
         System.out.println(found);
        
         LogisticRegression regression = new LogisticRegression(features[0], types[0]); // TODO handle proper model selection (e.g. cross-validation)
+        saveData(regression,sentence_file);
         testData(regression,vecMap,sentence_file.getName(),trial_file,genre);
+    }
+    public static void saveData(LogisticRegression reg,File embedding){
+        File loc=new File("regressions");
+        if(!(loc.exists()&&loc.isDirectory())){
+            if(!loc.mkdir()){
+                System.out.println("Coud not create directory for LogisticRegression objects.");
+            }
+        }
+        String filename="regression/"+embedding.getName()+(normalize?"_norm_":"_")+genre+".regr";
+        try(FileOutputStream output = new FileOutputStream(filename);
+            ObjectOutputStream stream=new ObjectOutputStream(output)){
+            stream.writeObject(reg);
+            stream.close();
+            output.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
     }
-
     public static int[] testData(LogisticRegression regression, HashMap<String, double[]> vecs,String training, File file,String genre) {
         int matrix[] = new int[9];
         try {
@@ -276,7 +298,9 @@ public class MultiNLI {
                     type = 2;
                 }
                 if (type != (-1)) {
-                    typesAsList.add(type);
+                    if(genre.equals("#ALL")||sentence[9].equals(genre)){
+                        typesAsList.add(type);
+                    }
                     SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
                     double[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap); // TODO fix this!!!
                     featuresAsList.add(featuresOfSentencePair);
@@ -387,7 +411,7 @@ public class MultiNLI {
                 files[2] = null;
             }
         } catch (IOException ex) {
-
+            ex.printStackTrace();
         }
         return files;
     }
