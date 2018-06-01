@@ -1,2 +1,3 @@
-L:\Dokumentumok\Tömörítvény\Kibontva\multinli_1.0\multinli_1.0_train.txt
-L:\Dokumentumok\Tömörítvény\Eredti\sg_en.vec.gz
+/home/berend/datasets/commonsense/multinli_1.0/multinli_1.0_train.txt
+/home/berend/workspace/MultiNLI/lib/sg_en_unit2_0.1_100.vec.gz
+/home/berend/datasets/commonsense/multinli_1.0/multinli_1.0_dev_matched.txt
