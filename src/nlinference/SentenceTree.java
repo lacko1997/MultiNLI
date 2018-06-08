@@ -11,6 +11,7 @@ import java.util.Comparator;
 public class SentenceTree {
     SentenceTree parent=null;
     String type;
+    double weight;
     String word;
     ArrayList<SentenceTree> children=new ArrayList<SentenceTree>();
     public SentenceTree(String type,String word){
@@ -24,6 +25,12 @@ public class SentenceTree {
     
     public String getType(){
         return this.type;
+    }
+    public double getWeigth(){
+        return weight;
+    }
+    public double setWeigth(double weight){
+        this.weight=weight;
     }
     public String getWord(){
         return this.word;
