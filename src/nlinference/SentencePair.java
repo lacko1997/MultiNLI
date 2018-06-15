@@ -99,7 +99,13 @@ public class SentencePair {
     }
     public static int wordCount = 0;
     public static int foundWords = 0;
-
+    
+    public double[] getWeightedSentencePairVec(HashMap<String,double[]> vecs){
+        WordAsVec vec=WordAsVec.find(vecs,ATree.word);
+        //vec.multiply(Math.pow(type, type))
+        return null;
+    }
+    
     public double[] getSentencePairVec(HashMap<String, double[]> vecs) {
         //System.out.println("sent");
         int wordInSentenceA = 0;

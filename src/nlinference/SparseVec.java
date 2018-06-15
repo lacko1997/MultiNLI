@@ -2,11 +2,11 @@ package nlinference;
 
 import java.util.ArrayList;
 
-public class RareVec {
+public class SparseVec {
     int nonZeroInds[];
     double values[];
     
-    public RareVec(String raw){
+    public SparseVec(String raw){
         String segments[]=raw.split(" ");
         ArrayList<Integer> inds=new ArrayList<Integer>(segments.length);
         ArrayList<Double> vals=new ArrayList<Double>(segments.length);

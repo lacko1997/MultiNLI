@@ -29,7 +29,7 @@ public class SentenceTree {
     public double getWeigth(){
         return weight;
     }
-    public double setWeigth(double weight){
+    public void setWeigth(double weight){
         this.weight=weight;
     }
     public String getWord(){
