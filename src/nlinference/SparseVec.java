@@ -3,8 +3,8 @@ package nlinference;
 import java.util.ArrayList;
 
 public class SparseVec {
-    int nonZeroInds[];
-    double values[];
+    private int nonZeroInds[];
+    private double values[];
     
     public SparseVec(String raw){
         String segments[]=raw.split(" ");
@@ -24,4 +24,9 @@ public class SparseVec {
             values[i]=vals.get(i);
         }
     }
+
+    public int[] getNonZeroInds() {
+        return nonZeroInds;
+    }
+    
 }

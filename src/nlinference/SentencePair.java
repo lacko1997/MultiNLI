@@ -6,6 +6,7 @@
 package nlinference;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -171,7 +172,51 @@ public class SentencePair {
         }
         return result;
     }
-
+    public int[] sparseSentencePairVec(HashMap<String, int[]> vecs){
+        ArrayList<Integer> Asentence=new ArrayList<Integer>();
+        for(int i=0;i<Atokens.length;i++){
+            int curr[]=vecs.get(Atokens[i]);
+            for(int j=0;j<curr.length;j++){
+                if(!Asentence.contains(curr[j])){
+                    Asentence.add(curr[j]);
+                }
+            }
+        }
+        int Avec[]=new int[Asentence.size()];
+        for(int i=0;i<Asentence.size();i++){
+            Avec[i]=Asentence.get(i);
+        }
+        Arrays.sort(Avec);
+        
+        ArrayList<Integer> Bsentence=new ArrayList<Integer>();
+        for(int i=0;i<Btokens.length;i++){
+            int curr[]=vecs.get(Btokens[i]);
+            for(int j=0;j<curr.length;j++){
+                if(!Bsentence.contains(curr[j])){
+                    Bsentence.add(curr[j]);
+                }
+            }
+        }
+        int Bvec[]=new int[Bsentence.size()];
+        for(int i=0;i<Bsentence.size();i++){
+            Bvec[i]=Bsentence.get(i);
+        }
+        ArrayList<Integer>result=new ArrayList<>();
+        int at=0;
+        for(int i=0;i<Bvec.length;i++){
+            if(Bvec[i]<=Avec[at]){
+                result.add(Bvec[i]);
+            }else{
+                result.add(Avec[at]);
+                at++;
+            }
+        }
+        int res[]=new int[result.size()];
+        for(int i=0;i<result.size();i++){
+            res[i]=result.get(i);
+        }
+        return res;
+    }
     public float JaccardPerWord() {
         int wordCount = Atokens.length < Btokens.length ? Btokens.length : Atokens.length;
         int lastWordIndex = Atokens.length > Btokens.length ? Btokens.length : Atokens.length;
