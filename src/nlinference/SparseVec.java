@@ -24,9 +24,22 @@ public class SparseVec {
             values[i]=vals.get(i);
         }
     }
+    public SparseVec(){
+    
+    }
 
     public int[] getNonZeroInds() {
         return nonZeroInds;
     }
-    
+    public double[] getValues(){
+        return values;
+    }
+    public void add(SparseVec vec){
+        ArrayList<Integer> list=new ArrayList<Integer>();
+        ArrayList<Double> dlist=new ArrayList<Double>();
+        for(int i=0;i<nonZeroInds.length;i++){
+            list.add(nonZeroInds[0]);
+        }
+        for(int i=0;i<vec.getNonZeroInds().length;i++);
+    }
 }

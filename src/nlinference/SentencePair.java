@@ -106,7 +106,6 @@ public class SentencePair {
         //vec.multiply(Math.pow(type, type))
         return null;
     }
-    
     public double[] getSentencePairVec(HashMap<String, double[]> vecs) {
         //System.out.println("sent");
         int wordInSentenceA = 0;
@@ -172,10 +171,10 @@ public class SentencePair {
         }
         return result;
     }
-    public int[] sparseSentencePairVec(HashMap<String, int[]> vecs){
+    public int[] sparseSentencePairVec(HashMap<String, SparseVec> vecs){
         ArrayList<Integer> Asentence=new ArrayList<Integer>();
         for(int i=0;i<Atokens.length;i++){
-            int curr[]=vecs.get(Atokens[i]);
+            SparseVec curr=vecs.get(Atokens[i]);
             for(int j=0;j<curr.length;j++){
                 if(!Asentence.contains(curr[j])){
                     Asentence.add(curr[j]);

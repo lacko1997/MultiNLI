@@ -200,14 +200,16 @@ public class MultiNLI {
             e1.printStackTrace();
         }
 
-        ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>(getVecCount(vreader));
-        try {
-            getWordVecs(vecs, vreader);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        
 
         if (sparse) {
+            ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>(getVecCount(vreader));
+            try {
+                getWordVecs(vecs, vreader);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
             double features[][][] = new double[1][][];
             int types[][] = new int[1][];
             HashMap<String, double[]> vecMap = getData(vecs, features, types, sentence_file);
@@ -217,13 +219,14 @@ public class MultiNLI {
 
             LogisticRegression regression = new LogisticRegression(features[0], types[0], 0, 1E-4, 200);
             
-             saveData(regression, sentence_file);
+            saveData(regression, sentence_file);
             testData(regression, vecMap, sentence_file.getName(), trial_file, genre);
         }else{
             int features[][][]=new int[1][][];
             int types[][]=new int[1][];
             
-            readSparesVec(features,types);
+            HashMap<String,SparseVec> vecs=readSparseVec(wordvec_file);
+            readSentences(features,types,vecs);
             
             Maxent maxent = new Maxent(100,features[0], types[0]);
         }
@@ -232,10 +235,70 @@ public class MultiNLI {
        
     }
 
-    static void readSparesVec(int features[][][],int types[][]){
+    static HashMap<String,SparseVec> readSparseVec(File file){
+        HashMap<String,SparseVec> map=new HashMap<String,SparseVec>();
+        try {
+            BufferedReader reader;
+            if(file.getName().endsWith(".gz")){
+                reader=new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
+            }else{
+                reader=new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            }
+            String line=reader.readLine();
+            while(line!=null){
+                SparseVec vec=new SparseVec(line);
+                map.put(line.split(" ")[0], vec);
+                line=reader.readLine();
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return map;
+    }
+    static void readSentenceFile(File file,int features[][][],int types[][],HashMap<Integer,SparseVec> wordVecMap){
+        try {
+            ArrayList<Integer> typesAsList=new ArrayList<Integer>();
+            ArrayList<int[]> featuresAsList=new ArrayList<int[]>();
+            int lineCounter=0;
+            
+            BufferedReader sreader=new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line=sreader.readLine();
+            while(line!=null){
+                String sentence[] = line.split("\t");
+                int type = -1;
+                if (line.startsWith("contradiction\t")) {
+                    type = 0;
+                } else if (line.startsWith("neutral\t")) {
+                    type = 1;
+                } else if (line.startsWith("entailment\t")) {
+                    type = 2;
+                }
+                if (type != (-1)) {
+                    if (genre.equals("#ALL") || sentence[9].equals(genre)) {
+                        typesAsList.add(type);
+                    }
+                    SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
+                    int[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap);
+                    featuresAsList.add(featuresOfSentencePair);
+                }
+                line = sreader.readLine();
+                if (++lineCounter % 10000 == 0) {
+                    break;
+                }
+                if (lineCounter % 10000 == 0) {
+                    System.err.println(lineCounter + " " + line);
+                }
+                sreader.readLine();
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
     }
-    
     public static void saveData(LogisticRegression reg, File embedding) {
         File loc = new File("regressions");
         if (!(loc.exists() && loc.isDirectory())) {
