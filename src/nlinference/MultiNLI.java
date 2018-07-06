@@ -200,8 +200,6 @@ public class MultiNLI {
             e1.printStackTrace();
         }
 
-        
-
         if (sparse) {
             ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>(getVecCount(vreader));
             try {
@@ -209,7 +207,7 @@ public class MultiNLI {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            
+
             double features[][][] = new double[1][][];
             int types[][] = new int[1][];
             HashMap<String, double[]> vecMap = getData(vecs, features, types, sentence_file);
@@ -218,37 +216,37 @@ public class MultiNLI {
             System.out.println(found);
 
             LogisticRegression regression = new LogisticRegression(features[0], types[0], 0, 1E-4, 200);
-            
+
             saveData(regression, sentence_file);
             testData(regression, vecMap, sentence_file.getName(), trial_file, genre);
-        }else{
-            int features[][][]=new int[1][][];
-            int types[][]=new int[1][];
-            
-            HashMap<String,SparseVec> vecs=readSparseVec(wordvec_file);
-            readSentences(features,types,vecs);
-            
-            Maxent maxent = new Maxent(100,features[0], types[0]);
+        } else {
+            int features[][][] = new int[1][][];
+            int types[][] = new int[1][];
+
+            HashMap<String, SparseVec> vecs = readSparseVec(wordvec_file);
+            readSentenceFile(sentence_file,features, types, vecs);
+
+            Maxent maxent = new Maxent(100, features[0], types[0]);
         }
-// TODO handle proper model selection (e.g.
+        // TODO handle proper model selection (e.g.
         // cross-validation)
-       
+
     }
 
-    static HashMap<String,SparseVec> readSparseVec(File file){
-        HashMap<String,SparseVec> map=new HashMap<String,SparseVec>();
+    static HashMap<String, SparseVec> readSparseVec(File file) {
+        HashMap<String, SparseVec> map = new HashMap<String, SparseVec>();
         try {
             BufferedReader reader;
-            if(file.getName().endsWith(".gz")){
-                reader=new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
-            }else{
-                reader=new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            if (file.getName().endsWith(".gz")) {
+                reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
+            } else {
+                reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             }
-            String line=reader.readLine();
-            while(line!=null){
-                SparseVec vec=new SparseVec(line);
+            String line = reader.readLine();
+            while (line != null) {
+                SparseVec vec = new SparseVec(line);
                 map.put(line.split(" ")[0], vec);
-                line=reader.readLine();
+                line = reader.readLine();
             }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
@@ -257,15 +255,16 @@ public class MultiNLI {
         }
         return map;
     }
-    static void readSentenceFile(File file,int features[][][],int types[][],HashMap<Integer,SparseVec> wordVecMap){
+
+    static void readSentenceFile(File file, int features[][][], int types[][], HashMap<String, SparseVec> wordVecMap) {
         try {
-            ArrayList<Integer> typesAsList=new ArrayList<Integer>();
-            ArrayList<int[]> featuresAsList=new ArrayList<int[]>();
-            int lineCounter=0;
-            
-            BufferedReader sreader=new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-            String line=sreader.readLine();
-            while(line!=null){
+            ArrayList<Integer> typesAsList = new ArrayList<Integer>();
+            ArrayList<int[]> featuresAsList = new ArrayList<int[]>();
+            int lineCounter = 0;
+
+            BufferedReader sreader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line = sreader.readLine();
+            while (line != null) {
                 String sentence[] = line.split("\t");
                 int type = -1;
                 if (line.startsWith("contradiction\t")) {
@@ -280,7 +279,7 @@ public class MultiNLI {
                         typesAsList.add(type);
                     }
                     SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
-                    int[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap);
+                    int[] featuresOfSentencePair = sentencePair.sparseSentencePairVec(wordVecMap);
                     featuresAsList.add(featuresOfSentencePair);
                 }
                 line = sreader.readLine();
@@ -297,8 +296,9 @@ public class MultiNLI {
         } catch (IOException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
+
     public static void saveData(LogisticRegression reg, File embedding) {
         File loc = new File("regressions");
         if (!(loc.exists() && loc.isDirectory())) {
@@ -308,7 +308,7 @@ public class MultiNLI {
         }
         String filename = "regressions/" + embedding.getName() + (normalize ? "_norm_" : "_") + genre + ".regr";
         try (FileOutputStream output = new FileOutputStream(filename);
-             ObjectOutputStream stream = new ObjectOutputStream(output)) {
+                ObjectOutputStream stream = new ObjectOutputStream(output)) {
             stream.writeObject(reg);
             stream.close();
             output.close();

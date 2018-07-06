@@ -100,19 +100,20 @@ public class SentencePair {
     }
     public static int wordCount = 0;
     public static int foundWords = 0;
-    
-    public double[] getWeightedSentencePairVec(HashMap<String,double[]> vecs){
-        WordAsVec vec=WordAsVec.find(vecs,ATree.word);
+
+    public double[] getWeightedSentencePairVec(HashMap<String, double[]> vecs) {
+        WordAsVec vec = WordAsVec.find(vecs, ATree.word);
         //vec.multiply(Math.pow(type, type))
         return null;
     }
+
     public double[] getSentencePairVec(HashMap<String, double[]> vecs) {
         //System.out.println("sent");
         int wordInSentenceA = 0;
         for (int i = 0; i < Atokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Atokens[i]);
             wordCount++;
-            if (vec != null&&!vec.isZeroVec()) {
+            if (vec != null && !vec.isZeroVec()) {
                 wordInSentenceA++;
                 foundWords++;
             }
@@ -123,7 +124,7 @@ public class SentencePair {
         for (int i = 0; i < Btokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Btokens[i]);
             wordCount++;
-            if (vec != null&&!vec.isZeroVec()) {
+            if (vec != null && !vec.isZeroVec()) {
                 wordInSentenceB++;
                 foundWords++;
             }
@@ -131,23 +132,23 @@ public class SentencePair {
         WordAsVec Asentence[];
         WordAsVec Bsentence[];
         if (wordInSentenceA != 0) {
-            Asentence= new WordAsVec[wordInSentenceA];
-        }else{
-            Asentence=new WordAsVec[1];
-            Asentence[0]=new WordAsVec();
+            Asentence = new WordAsVec[wordInSentenceA];
+        } else {
+            Asentence = new WordAsVec[1];
+            Asentence[0] = new WordAsVec();
         }
-        
+
         if (wordInSentenceB != 0) {
-            Bsentence= new WordAsVec[wordInSentenceB];
-        }else{
-            Bsentence=new WordAsVec[1];
-            Bsentence[0]=new WordAsVec();
+            Bsentence = new WordAsVec[wordInSentenceB];
+        } else {
+            Bsentence = new WordAsVec[1];
+            Bsentence[0] = new WordAsVec();
         }
 
         int at = 0;
         for (int i = 0; i < Atokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Atokens[i]);
-            if (vec != null&&!vec.isZeroVec()) {
+            if (vec != null && !vec.isZeroVec()) {
                 Asentence[at] = vec;
                 at++;
             }
@@ -155,7 +156,7 @@ public class SentencePair {
         at = 0;
         for (int i = 0; i < Btokens.length; i++) {
             WordAsVec vec = WordAsVec.find(vecs, Btokens[i]);
-            if (vec != null&&!vec.isZeroVec()) {
+            if (vec != null && !vec.isZeroVec()) {
                 Bsentence[at] = vec;
                 at++;
             }
@@ -171,51 +172,33 @@ public class SentencePair {
         }
         return result;
     }
-    public int[] sparseSentencePairVec(HashMap<String, SparseVec> vecs){
-        ArrayList<Integer> Asentence=new ArrayList<Integer>();
-        for(int i=0;i<Atokens.length;i++){
-            SparseVec curr=vecs.get(Atokens[i]);
-            for(int j=0;j<curr.length;j++){
-                if(!Asentence.contains(curr[j])){
-                    Asentence.add(curr[j]);
-                }
-            }
+
+    public int[] sparseSentencePairVec(HashMap<String, SparseVec> vecs) {
+        SparseVec linesA = new SparseVec();
+        SparseVec linesB = new SparseVec();
+        for (int i = 0; i < Atokens.length; i++) {
+            SparseVec curr = vecs.get(Atokens[i]);
+            linesA.add(curr);
         }
-        int Avec[]=new int[Asentence.size()];
-        for(int i=0;i<Asentence.size();i++){
-            Avec[i]=Asentence.get(i);
-        }
-        Arrays.sort(Avec);
+        linesA.div(Atokens.length);
+        linesA.treshold(0.75);
         
-        ArrayList<Integer> Bsentence=new ArrayList<Integer>();
-        for(int i=0;i<Btokens.length;i++){
-            int curr[]=vecs.get(Btokens[i]);
-            for(int j=0;j<curr.length;j++){
-                if(!Bsentence.contains(curr[j])){
-                    Bsentence.add(curr[j]);
-                }
-            }
+        for (int i = 0; i < Btokens.length; i++) {
+            SparseVec curr = vecs.get(Btokens[i]);
+            linesB.add(curr);
         }
-        int Bvec[]=new int[Bsentence.size()];
-        for(int i=0;i<Bsentence.size();i++){
-            Bvec[i]=Bsentence.get(i);
-        }
-        ArrayList<Integer>result=new ArrayList<>();
-        int at=0;
-        for(int i=0;i<Bvec.length;i++){
-            if(Bvec[i]<=Avec[at]){
-                result.add(Bvec[i]);
-            }else{
-                result.add(Avec[at]);
-                at++;
-            }
-        }
-        int res[]=new int[result.size()];
-        for(int i=0;i<result.size();i++){
-            res[i]=result.get(i);
-        }
+        linesB.div(Btokens.length);
+        linesB.treshold(0.75);
+        
+        ArrayList<Integer> result=new ArrayList<Integer>();
+        int Avec[]=linesA.getNonZeroInds();
+        int Bvec[]=linesB.getNonZeroInds();
+        
+        int res[]=new int[100];
+        
         return res;
     }
+
     public float JaccardPerWord() {
         int wordCount = Atokens.length < Btokens.length ? Btokens.length : Atokens.length;
         int lastWordIndex = Atokens.length > Btokens.length ? Btokens.length : Atokens.length;
