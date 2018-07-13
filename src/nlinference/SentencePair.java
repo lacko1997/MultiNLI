@@ -176,26 +176,43 @@ public class SentencePair {
     public int[] sparseSentencePairVec(HashMap<String, SparseVec> vecs) {
         SparseVec linesA = new SparseVec();
         SparseVec linesB = new SparseVec();
+
+        int linesA_c = 0;
+        int linesB_c = 0;
+
         for (int i = 0; i < Atokens.length; i++) {
             SparseVec curr = vecs.get(Atokens[i]);
-            linesA.add(curr);
+            if (curr != null) {
+                linesA.add(curr);
+                linesA_c++;
+            }
         }
         linesA.div(Atokens.length);
         linesA.treshold(0.75);
-        
+
         for (int i = 0; i < Btokens.length; i++) {
             SparseVec curr = vecs.get(Btokens[i]);
-            linesB.add(curr);
+            if (curr != null) {
+                linesB.add(curr);
+                linesB_c++;
+            }
         }
         linesB.div(Btokens.length);
         linesB.treshold(0.75);
-        
-        ArrayList<Integer> result=new ArrayList<Integer>();
-        int Avec[]=linesA.getNonZeroInds();
-        int Bvec[]=linesB.getNonZeroInds();
-        
-        int res[]=new int[100];
-        
+
+        ArrayList<Integer> result = new ArrayList<Integer>();
+        int Avec[] = linesA.getNonZeroInds();
+        int Bvec[] = linesB.getNonZeroInds();
+
+        for (int i = 0; i < Avec.length; i++) {
+            for (int j = 0; j < Bvec.length; i++) {
+                result.add(Avec[i] * 100 + Bvec[i]);
+            }
+        }
+        int res[] = new int[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            res[i] = result.get(i);
+        }
         return res;
     }
 

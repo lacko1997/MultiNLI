@@ -61,7 +61,7 @@ public class SparseVec {
                 data.add(new DataPair(i, value));
             }
         }
-
+        this.data=new DataPair[data.size()];
         for (int i = 0; i < data.size(); i++) {
             this.data[i] = data.get(i);
         }
@@ -100,7 +100,7 @@ public class SparseVec {
                 if (pairs[i].getIndex() < this.data[at].getIndex()) {
                     pair.add(pairs[i]);
                 } else if (pairs[i].getIndex() == data[at].getIndex()) {
-                    pair.add(new DataPair(pairs[i].getIndex(), pairs[i].getValue() + data[i].getValue()));
+                    pair.add(new DataPair(pairs[i].getIndex(), pairs[i].getValue() + data[at].getValue()));
                     at++;
                 } else {
                     pair.add(data[at]);
@@ -130,7 +130,7 @@ public class SparseVec {
                 if (pairs[i].getIndex() < this.data[at].getIndex()) {
                     pair.add(pairs[i]);
                 } else if (pairs[i].getIndex() == data[at].getIndex()) {
-                    pair.add(new DataPair(pairs[i].getIndex(), pairs[i].getValue() + data[i].getValue()));
+                    pair.add(new DataPair(pairs[i].getIndex(), pairs[i].getValue() + data[at].getValue()));
                     at++;
                 } else {
                     pair.add(data[at]);

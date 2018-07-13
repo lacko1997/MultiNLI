@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -200,7 +201,7 @@ public class MultiNLI {
             e1.printStackTrace();
         }
 
-        if (sparse) {
+        if (!sparse) {
             ArrayList<WordAsVec> vecs = new ArrayList<WordAsVec>(getVecCount(vreader));
             try {
                 getWordVecs(vecs, vreader);
@@ -225,14 +226,69 @@ public class MultiNLI {
 
             HashMap<String, SparseVec> vecs = readSparseVec(wordvec_file);
             readSentenceFile(sentence_file,features, types, vecs);
-
-            Maxent maxent = new Maxent(100, features[0], types[0]);
+            /*for(int f:types[0]){
+                System.out.println("aa "+f);
+            }*/
+            System.out.println(Arrays.toString(types[0]));
+            Maxent maxent = new Maxent(10000, features[0], types[0]);
+            testSparseData(maxent,sentence_file.getName(),trial_file,vecs);
         }
         // TODO handle proper model selection (e.g.
         // cross-validation)
 
     }
+    static int[] testSparseData(Maxent maxent,String training,File file,HashMap<String,SparseVec> vecs){
+        int matrix[] = new int[9];
+        try {
+            BufferedReader bin = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line = bin.readLine();
+            while (line != null) {
+                String sentences[] = line.split("\t");
 
+                int type = -1;
+                if (line.startsWith("contradiction\t")) {
+                    type = 0;
+                } else if (line.startsWith("neutral\t")) {
+                    type = 1;
+                } else if (line.startsWith("entailment\t")) {
+                    type = 2;
+                }
+                if (type != -1) {
+                    SentencePair pair = new SentencePair(sentences[3], sentences[4]);
+                    int sentenceVec[] = pair.sparseSentencePairVec(vecs);
+                    int predType = maxent.predict(sentenceVec);
+                    matrix[predType * 3 + type]++;
+                }
+                line = bin.readLine();
+            }
+            for (int i = 0; i < 3; i++) {
+                System.out.println(matrix[i * 3] + " " + matrix[i * 3 + 1] + " " + matrix[i * 3 + 2]);
+            }
+            int overall = 0;
+            int allcorrect = 0;
+            for (int i = 0; i < 9; i++) {
+                overall += matrix[i];
+            }
+            float correct[] = new float[3];
+            for (int i = 0; i < 3; i++) {
+                allcorrect += matrix[i * 3 + i];
+                correct[i] = (float) matrix[i * 3 + i] / (float) (matrix[i * 3] + matrix[i * 3 + 1] + matrix[i * 3 + 2]);
+            }
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            System.out.println("training data: " + training + " " + "genre: " + genre + (normalize ? "normalized" : ""));
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            System.out.println("contradiction: " + correct[0]);
+            System.out.println("neutral: " + correct[1]);
+            System.out.println("entailment: " + correct[2]);
+            System.out.println("");
+            System.out.println("overall: " + ((float) allcorrect / (float) overall));
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return matrix;
+    }
     static HashMap<String, SparseVec> readSparseVec(File file) {
         HashMap<String, SparseVec> map = new HashMap<String, SparseVec>();
         try {
@@ -276,6 +332,7 @@ public class MultiNLI {
                 }
                 if (type != (-1)) {
                     if (genre.equals("#ALL") || sentence[9].equals(genre)) {
+                        //System.out.println(type);
                         typesAsList.add(type);
                     }
                     SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
@@ -291,6 +348,16 @@ public class MultiNLI {
                 }
                 sreader.readLine();
             }
+            /*features[0]=null;
+            types[0]=null;*/
+            int feats[][]=new int[featuresAsList.size()][];
+            int typs[]=new int[typesAsList.size()];
+            for(int i=0;i<featuresAsList.size();i++){
+                feats[i]=featuresAsList.get(i);
+                typs[i]=typesAsList.get(i);
+            }
+            features[0]=feats;
+            types[0]=typs;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
