@@ -42,7 +42,7 @@ public class WordTypeResolver {
             String word=words[i].split("/")[1];
             for(int j=0;j<word_types.length;j++){
                 
-            }    
+            }
         }
     }
 }

@@ -125,7 +125,9 @@ public class SentencePair {
         //vec.multiply(Math.pow(type, type))
         return null;
     }
-
+    HashMap<String> types=newHashMap<String>();
+    public String[] getPhraseTypes(){
+    }
     public double[] getSentencePairVec(HashMap<String, double[]> vecs) {
         //System.out.println("sent");
         int wordInSentenceA = 0;
