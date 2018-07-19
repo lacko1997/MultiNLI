@@ -64,20 +64,39 @@ public class SentencePair {
         this.type = type;
     }
 
+    private String getMarkedSentencePair(SentenceTree tree){
+        String str="";
+        for(int i=0;i<tree.children.size();i++){
+            str+=tree.children.get(i).type;
+            if(tree.children.get(i).word==null){
+                str+=" ";
+                str+= getMarkedSentencePair(tree.children.get(i));
+            }else{
+                str+="/";
+                str+=tree.children.get(i).word;
+                str+="\t";
+            }
+        }
+        str+="<";
+        return str;
+    }
+    
     public SentencePair(String Asentence, String Bsentence, int type) {
         this.ATree = buildTree(Asentence);
         this.BTree = buildTree(Bsentence);
 
         Atokens = ATree.getSentence().split(" ");
         Btokens = BTree.getSentence().split(" ");
-
+        
+        System.out.println(getMarkedSentencePair(ATree));
+        
         this.type = type;
     }
 
     public SentencePair(String Asentence, String Bsentence) {
         this.ATree = buildTree(Asentence);
         this.BTree = buildTree(Bsentence);
-
+        
         Atokens = ATree.getSentence().split(" ");
         Btokens = BTree.getSentence().split(" ");
     }

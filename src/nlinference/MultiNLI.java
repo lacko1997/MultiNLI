@@ -34,7 +34,7 @@ import smile.classification.Maxent;
  * @author Lacko
  */
 public class MultiNLI {
-
+    public static HashSet<String> typeEnum=new HashSet<String>();
     static FileFilter sentence = new FileFilter() {
 
         @Override
@@ -471,6 +471,7 @@ public class MultiNLI {
                         typesAsList.add(type);
                     }
                     SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
+                    String pharesTypes[]=sentencePair.getPhraseTypes();
                     double[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap); // TODO fix this!!!
                     featuresAsList.add(featuresOfSentencePair);
                 }
