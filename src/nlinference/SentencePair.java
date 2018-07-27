@@ -5,10 +5,19 @@
  */
 package nlinference;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -23,6 +32,32 @@ public class SentencePair {
 
     private SentenceTree ATree;
     private SentenceTree BTree;
+
+    public static HashMap<String, Double> typeWeights = new HashMap<String, Double>();
+    public static HashMap<String, Integer> typeCount = new HashMap<String, Integer>();
+    public static HashSet<String> types = new HashSet<String>();
+
+    public static void readTypes(File types) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(types)));
+            String line = reader.readLine();
+            while (line != null) {
+                String type = line.split(" ")[0];
+                double weight;
+                try {
+                    weight = Double.parseDouble(line.split(" ")[1]);
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    weight = 1.0;
+                }
+                typeWeights.put(type, weight);
+                line = reader.readLine();
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SentencePair.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(SentencePair.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     private SentenceTree buildTree(String sentence) {
         SentenceTree parent = null;
@@ -64,32 +99,35 @@ public class SentencePair {
         this.type = type;
     }
 
-    private String getMarkedSentencePair(SentenceTree tree){
-        String str="";
-        for(int i=0;i<tree.children.size();i++){
-            str+=tree.children.get(i).type;
-            if(tree.children.get(i).word==null){
-                str+=" ";
-                str+= getMarkedSentencePair(tree.children.get(i));
-            }else{
-                str+="/";
-                str+=tree.children.get(i).word;
-                str+="\t";
+    private String getMarkedSentencePair(SentenceTree tree) {
+        String str = "";
+        for (int i = 0; i < tree.children.size(); i++) {
+            str += tree.children.get(i).type;
+            if (tree.children.get(i).word == null) {
+                str += " ";
+                str += getMarkedSentencePair(tree.children.get(i));
+            } else {
+                str += "/";
+                str += tree.children.get(i).word;
+                str += "\t";
             }
         }
-        str+="<";
+        str += "<";
         return str;
     }
-    
+    WordTypeResolver resolveA, resolveB;
+
     public SentencePair(String Asentence, String Bsentence, int type) {
         this.ATree = buildTree(Asentence);
         this.BTree = buildTree(Bsentence);
 
         Atokens = ATree.getSentence().split(" ");
         Btokens = BTree.getSentence().split(" ");
-        
-        System.out.println(getMarkedSentencePair(ATree));
-        
+
+        resolveA = new WordTypeResolver(getMarkedSentencePair(ATree));
+        resolveB = new WordTypeResolver(getMarkedSentencePair(BTree));
+        //System.out.println(resolve);
+
         this.type = type;
     }
 
@@ -97,6 +135,9 @@ public class SentencePair {
         this.ATree = buildTree(Asentence);
         this.BTree = buildTree(Bsentence);
         
+        resolveA = new WordTypeResolver(getMarkedSentencePair(ATree));
+        resolveB = new WordTypeResolver(getMarkedSentencePair(BTree));
+
         Atokens = ATree.getSentence().split(" ");
         Btokens = BTree.getSentence().split(" ");
     }
@@ -121,13 +162,38 @@ public class SentencePair {
     public static int foundWords = 0;
 
     public double[] getWeightedSentencePairVec(HashMap<String, double[]> vecs) {
-        WordAsVec vec = WordAsVec.find(vecs, ATree.word);
-        //vec.multiply(Math.pow(type, type))
-        return null;
+        if (vecs == null || resolveA == null || resolveB == null) {
+            System.out.println(vecs + " " + resolveA + " " + resolveB);
+        }
+        WordAsVec A = resolveA.getWieghtedVecSum(vecs);
+        WordAsVec B = resolveB.getWieghtedVecSum(vecs);
+        return WordAsVec.diff(A, B).getWordvec();
     }
-    HashMap<String> types=newHashMap<String>();
-    public String[] getPhraseTypes(){
+
+    private void getRecursiveTree(SentenceTree tree) {
+        SentencePair.types.add(tree.getType());
+        if (SentencePair.typeCount.containsKey(tree.getType())) {
+            typeCount.replace(tree.getType(), typeCount.get(tree.getType()) + 1);
+        } else {
+            typeCount.put(tree.getType(), 1);
+        }
+        for (int i = 0; i < tree.getChildren().size(); i++) {
+            getRecursiveTree(tree.getChildren().get(i));
+        }
     }
+    /*public void resolveSentencePair(){
+     SentenceTree tree=ATree.findChildByType("NP");
+     }*/
+
+    public void getPhraseTypes() {
+        for (int i = 0; i < ATree.getChildren().size(); i++) {
+            getRecursiveTree(ATree.getChildren().get(i));
+        }
+        for (int i = 0; i < BTree.getChildren().size(); i++) {
+            getRecursiveTree(BTree.getChildren().get(i));
+        }
+    }
+
     public double[] getSentencePairVec(HashMap<String, double[]> vecs) {
         //System.out.println("sent");
         int wordInSentenceA = 0;
@@ -219,7 +285,7 @@ public class SentencePair {
             }
         }
         linesB.div(Btokens.length);
-        linesB.treshold(0.75);
+        linesB.treshold(0.25);
 
         ArrayList<Integer> result = new ArrayList<Integer>();
         int Avec[] = linesA.getNonZeroInds();

@@ -84,4 +84,12 @@ public class SentenceTree {
     public String toString(){
         return getFormatSentence().replace("  "," ").substring(1);
     }
+    public SentenceTree fildChildByType(String type){
+        for(int i=0;i<children.size();i++){
+            if(children.get(i).getType().equals(type)){
+                return children.get(i);
+            }
+        }
+        return null;
+    }
 }

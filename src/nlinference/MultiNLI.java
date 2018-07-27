@@ -6,6 +6,7 @@
 package nlinference;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -33,8 +34,12 @@ import smile.classification.Maxent;
  *
  * @author Lacko
  */
+//L:\Dokumentumok\Tömörítvény\Kibontva\multinli_1.0\multinli_1.0_train.txt L:\Dokumentumok\Tömörítvény\Eredti\sg_en.vec.gz L:\Dokumentumok\Tömörítvény\Kibontva\multinli_1.0\multinli_1.0_dev_matched.txt
+//L:\Dokumentumok\Tömörítvény\Kibontva\multinli_1.0\multinli_1.0_train.txt L:\Dokumentumok\Tömörítvény\Eredti\sg_en_intact_0.4_100.vec.gz L:\Dokumentumok\Tömörítvény\Kibontva\multinli_1.0\multinli_1.0_dev_matched.txt -sparse
 public class MultiNLI {
-    public static HashSet<String> typeEnum=new HashSet<String>();
+
+    private static final double scale = 1.2;
+    public static HashSet<String> typeEnum = new HashSet<String>();
     static FileFilter sentence = new FileFilter() {
 
         @Override
@@ -211,12 +216,17 @@ public class MultiNLI {
 
             double features[][][] = new double[1][][];
             int types[][] = new int[1][];
-            HashMap<String, double[]> vecMap = getData(vecs, features, types, sentence_file);
+            HashMap<String, double[]> vecMap = getDenseTrainSentences(vecs, features, types, sentence_file);
+            if (rereadSentences) {
+                vecMap = getDenseTrainSentences(vecs, features, types, sentence_file);
+            }
 
             float found = (float) SentencePair.foundWords / (float) SentencePair.wordCount;
-            System.out.println(found);
-
-            LogisticRegression regression = new LogisticRegression(features[0], types[0], 0, 1E-4, 200);
+            /*System.out.println(found);
+            for (double[] vecss : features[0]) {
+                System.out.println(Arrays.toString(vecss));
+            }*/
+            LogisticRegression regression = new LogisticRegression(features[0], types[0]);
 
             saveData(regression, sentence_file);
             testData(regression, vecMap, sentence_file.getName(), trial_file, genre);
@@ -225,19 +235,20 @@ public class MultiNLI {
             int types[][] = new int[1][];
 
             HashMap<String, SparseVec> vecs = readSparseVec(wordvec_file);
-            readSentenceFile(sentence_file,features, types, vecs);
+            readSentenceFile(sentence_file, features, types, vecs);
             /*for(int f:types[0]){
-                System.out.println("aa "+f);
-            }*/
-            System.out.println(Arrays.toString(types[0]));
+             System.out.println("aa "+f);
+             }*/
+            //System.out.println(Arrays.toString(types[0]));
             Maxent maxent = new Maxent(10000, features[0], types[0]);
-            testSparseData(maxent,sentence_file.getName(),trial_file,vecs);
+            testSparseData(maxent, sentence_file.getName(), trial_file, vecs);
         }
         // TODO handle proper model selection (e.g.
         // cross-validation)
 
     }
-    static int[] testSparseData(Maxent maxent,String training,File file,HashMap<String,SparseVec> vecs){
+
+    static int[] testSparseData(Maxent maxent, String training, File file, HashMap<String, SparseVec> vecs) {
         int matrix[] = new int[9];
         try {
             BufferedReader bin = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
@@ -289,6 +300,7 @@ public class MultiNLI {
         }
         return matrix;
     }
+
     static HashMap<String, SparseVec> readSparseVec(File file) {
         HashMap<String, SparseVec> map = new HashMap<String, SparseVec>();
         try {
@@ -340,7 +352,7 @@ public class MultiNLI {
                     featuresAsList.add(featuresOfSentencePair);
                 }
                 line = sreader.readLine();
-                if (++lineCounter % 10000 == 0) {
+                if (++lineCounter % 100000 == 0) {
                     break;
                 }
                 if (lineCounter % 10000 == 0) {
@@ -349,15 +361,15 @@ public class MultiNLI {
                 sreader.readLine();
             }
             /*features[0]=null;
-            types[0]=null;*/
-            int feats[][]=new int[featuresAsList.size()][];
-            int typs[]=new int[typesAsList.size()];
-            for(int i=0;i<featuresAsList.size();i++){
-                feats[i]=featuresAsList.get(i);
-                typs[i]=typesAsList.get(i);
+             types[0]=null;*/
+            int feats[][] = new int[featuresAsList.size()][];
+            int typs[] = new int[typesAsList.size()];
+            for (int i = 0; i < featuresAsList.size(); i++) {
+                feats[i] = featuresAsList.get(i);
+                typs[i] = typesAsList.get(i);
             }
-            features[0]=feats;
-            types[0]=typs;
+            features[0] = feats;
+            types[0] = typs;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -405,7 +417,7 @@ public class MultiNLI {
                 }
                 if (type != -1) {
                     SentencePair pair = new SentencePair(sentences[3], sentences[4]);
-                    double sentenceVec[] = pair.getSentencePairVec(vecs);
+                    double sentenceVec[] = pair.getWeightedSentencePairVec(vecs);
                     int predType = regression.predict(sentenceVec);
                     matrix[predType * 3 + type]++;
                 }
@@ -439,13 +451,18 @@ public class MultiNLI {
         }
         return matrix;
     }
+    public static boolean rereadSentences = false;
 
-    public static HashMap<String, double[]> getData(ArrayList<WordAsVec> vecs, double[][][] feature, int typearr[][], File file1) {
+    public static HashMap<String, double[]> getDenseTrainSentences(ArrayList<WordAsVec> vecs, double[][][] feature, int typearr[][], File file1) {
         HashMap<String, double[]> wordVecMap = new HashMap<String, double[]>();
         for (int i = 0; i < vecs.size(); i++) {
             wordVecMap.put(vecs.get(i).getWord(), vecs.get(i).getWordvec());
         }
-
+        File tfile = new File("word_types");
+        if (tfile.exists()) {
+            rereadSentences = false;
+            SentencePair.readTypes(tfile);
+        }
         System.err.format("%d vectors read in...\n", vecs.size());
 
         vecs.sort(WordAsVec.comp);
@@ -471,17 +488,36 @@ public class MultiNLI {
                         typesAsList.add(type);
                     }
                     SentencePair sentencePair = new SentencePair(sentence[3], sentence[4], type);
-                    String pharesTypes[]=sentencePair.getPhraseTypes();
-                    double[] featuresOfSentencePair = sentencePair.getSentencePairVec(wordVecMap); // TODO fix this!!!
+                    sentencePair.getPhraseTypes();
+                    double[] featuresOfSentencePair = sentencePair.getWeightedSentencePairVec(wordVecMap); // TODO fix this!!!
                     featuresAsList.add(featuresOfSentencePair);
                 }
                 line = sreader.readLine();
-                if (++lineCounter % 10000 == 0) {
+                if (++lineCounter % 100000 == 0) {
                     break;
                 }
                 if (lineCounter % 10000 == 0) {
                     System.err.println(lineCounter + " " + line);
                 }
+            }
+            if (!tfile.exists()) {
+                int sum = 0;
+                String maxKey = (String) SentencePair.types.toArray()[0];
+                int max = SentencePair.typeCount.get(maxKey);
+                for (String str : SentencePair.types) {
+                    sum += SentencePair.typeCount.get(str);
+                    if (SentencePair.typeCount.get(str) > max) {
+                        maxKey = str;
+                        max = SentencePair.typeCount.get(str);
+                    }
+                }
+                System.out.println(maxKey + " " + max);
+                BufferedWriter writer = new BufferedWriter(new FileWriter(tfile));
+                for (String str : SentencePair.types) {
+                    writer.write(str + " " + ((double) SentencePair.typeCount.get(str) / (double) max) * scale + "\n");
+                }
+                writer.close();
+                rereadSentences = true;
             }
         } catch (IOException ex) {
             Logger.getLogger(MultiNLI.class.getName()).log(Level.SEVERE, null, ex);
